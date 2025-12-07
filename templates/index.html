@@ -512,10 +512,20 @@
         
         .table-support thead {
             background: var(--bg-gradient-success);
+            color: white;
+        }
+        
+        .table-support thead th {
+            color: white;
         }
         
         .table-resistance thead {
             background: var(--bg-gradient-error);
+            color: white;
+        }
+        
+        .table-resistance thead th {
+            color: white;
         }
         
         .table-price {
@@ -1395,7 +1405,7 @@
                     html += '</div>';
                     html += '<details style="margin-top: 16px;"><summary style="cursor: pointer; color: var(--color-primary); font-weight: 600; padding: 8px;">查看完整清單（' + data.turnover_report.turnover_stocks_list.length + ' 檔）</summary>';
                     html += '<div class="table-wrapper" style="margin-top: 12px;">';
-                    html += '<table><thead><tr style="background: var(--bg-secondary);"><th>排名</th><th>代碼</th><th>股票名稱</th>';
+                    html += '<table><thead><tr style="background: var(--bg-gradient-success); color: white;"><th>排名</th><th>代碼</th><th>股票名稱</th>';
                     const firstTurnoverStock = data.turnover_report.turnover_stocks_list[0];
                     if (firstTurnoverStock && (firstTurnoverStock.chg_pct !== null && firstTurnoverStock.chg_pct !== undefined)) {
                         html += '<th style="text-align: right;">漲跌 (%)</th>';
@@ -1427,7 +1437,7 @@
                     html += '</div>';
                     html += '<details style="margin-top: 16px;"><summary style="cursor: pointer; color: var(--color-warning); font-weight: 600; padding: 8px;">查看未分類股票清單（' + data.turnover_report.unclassified_stocks.length + ' 檔）</summary>';
                     html += '<div class="table-wrapper" style="margin-top: 12px;">';
-                    html += '<table><thead><tr style="background: var(--bg-secondary);"><th>代碼</th><th>股票名稱</th>';
+                    html += '<table><thead><tr style="background: var(--bg-gradient-warning); color: var(--text-primary);"><th>代碼</th><th>股票名稱</th>';
                     const firstStock = data.turnover_report.unclassified_stocks[0];
                     if (firstStock && (firstStock.chg_pct !== null && firstStock.chg_pct !== undefined)) {
                         html += '<th style="text-align: right;">漲跌 (%)</th>';
@@ -1536,7 +1546,7 @@
                     html += '</div>';
                     html += '<details style="margin-top: 16px;"><summary style="cursor: pointer; color: var(--color-error); font-weight: 600; padding: 8px;">查看完整清單（' + data.focus_report.focus_stocks_list.length + ' 檔）</summary>';
                     html += '<div class="table-wrapper" style="margin-top: 12px;">';
-                    html += '<table><thead><tr style="background: var(--bg-secondary);"><th>代碼</th><th>股票名稱</th>';
+                    html += '<table><thead><tr style="background: var(--bg-gradient-error); color: white;"><th>代碼</th><th>股票名稱</th>';
                     const firstFocusStock = data.focus_report.focus_stocks_list[0];
                     if (firstFocusStock && (firstFocusStock.chg_pct !== null && firstFocusStock.chg_pct !== undefined)) {
                         html += '<th style="text-align: right;">漲跌 (%)</th>';
@@ -1567,7 +1577,7 @@
                     html += '</div>';
                     html += '<details style="margin-top: 16px;"><summary style="cursor: pointer; color: var(--color-warning); font-weight: 600; padding: 8px;">查看未分類注意股清單（' + data.focus_report.unclassified_stocks.length + ' 檔）</summary>';
                     html += '<div class="table-wrapper" style="margin-top: 12px;">';
-                    html += '<table><thead><tr style="background: var(--bg-secondary);"><th>代碼</th><th>股票名稱</th>';
+                    html += '<table><thead><tr style="background: var(--bg-gradient-warning); color: var(--text-primary);"><th>代碼</th><th>股票名稱</th>';
                     const firstFocusStock = data.focus_report.unclassified_stocks[0];
                     if (firstFocusStock && (firstFocusStock.chg_pct !== null && firstFocusStock.chg_pct !== undefined)) {
                         html += '<th style="text-align: right;">漲跌 (%)</th>';

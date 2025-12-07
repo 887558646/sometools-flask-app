@@ -150,14 +150,35 @@ def analyze():
             focus_avg_turnover = float(focus_merged['turnover'].mean()) if not focus_merged.empty else None
             
             # 準備注意股清單
+            # 使用 focus_merged 來獲取正確的股票名稱（因為 focus_df 的 name 可能包含敘述）
             focus_stocks_list = []
+            # 建立一個 code -> name 的映射，優先使用 focus_merged 中的名稱
+            name_map = {}
+            if not focus_merged.empty:
+                for _, row in focus_merged.iterrows():
+                    stock_code = str(row["code"]).zfill(4)
+                    name_map[stock_code] = row.get('name', '')
+            
+            # 遍歷 focus_df，但使用 name_map 中的正確名稱
             for _, row in focus_df.iterrows():
                 stock_code = str(row["code"]).zfill(4)
+                # 優先使用合併後的名稱，如果沒有則使用原始名稱
+                stock_name = name_map.get(stock_code, row.get('name', ''))
+                
+                # 從 focus_merged 中獲取週轉率和漲跌幅（如果有的話）
+                turnover = None
+                chg_pct = None
+                if not focus_merged.empty:
+                    merged_row = focus_merged[focus_merged['code'] == stock_code]
+                    if not merged_row.empty:
+                        turnover = float(merged_row.iloc[0].get('turnover', 0)) if pd.notna(merged_row.iloc[0].get('turnover')) else None
+                        chg_pct = float(merged_row.iloc[0].get('chg_pct', 0)) if pd.notna(merged_row.iloc[0].get('chg_pct')) else None
+                
                 focus_stocks_list.append({
                     'code': stock_code,
-                    'name': row.get('name', ''),
-                    'turnover': float(row.get('turnover', 0)) if pd.notna(row.get('turnover')) else None,
-                    'chg_pct': float(row.get('chg_pct', 0)) if pd.notna(row.get('chg_pct')) else None,
+                    'name': stock_name,
+                    'turnover': turnover,
+                    'chg_pct': chg_pct,
                 })
             
             # 為每個注意股族群準備個股清單
