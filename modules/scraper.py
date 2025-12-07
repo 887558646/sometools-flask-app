@@ -151,6 +151,18 @@ def fetch_attention_stock_data() -> pd.DataFrame:
                 # 如果名稱為空，嘗試從 title 屬性或其他地方找，或者這只是代碼連結
                 if not name:
                     continue
+                
+                # 如果名稱太長（超過20個字元），可能是敘述文字，嘗試提取簡短的股票名稱
+                # 通常股票名稱是2-4個中文字
+                if len(name) > 20:
+                    # 嘗試提取前幾個中文字作為股票名稱
+                    import re
+                    name_match = re.search(r'^([\u4e00-\u9fff]{2,4})', name)
+                    if name_match:
+                        name = name_match.group(1)
+                    else:
+                        # 如果無法提取，跳過這筆資料（名稱可能是敘述）
+                        continue
                     
                 stocks.append({'code': code, 'name': name})
                 seen_codes.add(code)
@@ -188,10 +200,18 @@ def fetch_attention_stock_data() -> pd.DataFrame:
                         valid_stocks = extracted.dropna(subset=['code']).copy()
                         if not valid_stocks.empty:
                             # 清理名稱 (移除可能的代碼殘留)
-                            valid_stocks.loc[:, 'name'] = valid_stocks.apply(
-                                lambda x: str(x['name']).replace(str(x['code']), '').strip() if pd.notna(x['name']) else '', 
-                                axis=1
-                            )
+                            def clean_stock_name(row):
+                                name_str = str(row['name']).replace(str(row['code']), '').strip()
+                                # 如果名稱太長（超過20個字元），可能是敘述文字，嘗試提取簡短的股票名稱
+                                if len(name_str) > 20:
+                                    name_match = re.search(r'^([\u4e00-\u9fff]{2,4})', name_str)
+                                    if name_match:
+                                        return name_match.group(1)
+                                    else:
+                                        return ''  # 無法提取，返回空字串
+                                return name_str
+                            
+                            valid_stocks.loc[:, 'name'] = valid_stocks.apply(clean_stock_name, axis=1)
                             # 移除空名稱
                             valid_stocks = valid_stocks[valid_stocks['name'] != '']
                             
@@ -218,8 +238,18 @@ def fetch_attention_stock_data() -> pd.DataFrame:
                 code = match.group(1)
                 name = match.group(2)
                 
+                # 如果名稱太長（超過20個字元），可能是敘述文字，嘗試提取簡短的股票名稱
+                if len(name) > 20:
+                    name_match = re.search(r'^([\u4e00-\u9fff]{2,4})', name)
+                    if name_match:
+                        name = name_match.group(1)
+                    else:
+                        # 如果無法提取，跳過這筆資料
+                        continue
+                
                 # 簡單驗證名稱長度，避免抓到雜訊
-                if len(name) > 0 and code not in seen_codes:
+                # 股票名稱通常是2-4個中文字，太長或太短都可能是錯誤的
+                if 2 <= len(name) <= 10 and code not in seen_codes:
                     stocks.append({'code': code, 'name': name})
                     seen_codes.add(code)
                     

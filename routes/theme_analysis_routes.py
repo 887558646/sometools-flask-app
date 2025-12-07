@@ -7,6 +7,7 @@ from flask import Blueprint, request, jsonify
 import sys
 import os
 import pandas as pd
+import re
 from datetime import datetime
 
 # 添加父目錄到路徑
@@ -152,18 +153,36 @@ def analyze():
             # 準備注意股清單
             # 使用 focus_merged 來獲取正確的股票名稱（因為 focus_df 的 name 可能包含敘述）
             focus_stocks_list = []
-            # 建立一個 code -> name 的映射，優先使用 focus_merged 中的名稱
+            # 建立一個 code -> name 的映射，優先使用 focus_merged 中的名稱（來自 stocks_df，包含正確的股票名稱）
             name_map = {}
             if not focus_merged.empty:
                 for _, row in focus_merged.iterrows():
                     stock_code = str(row["code"]).zfill(4)
+                    # 使用合併後的名稱（來自 stocks_df，是正確的股票名稱）
                     name_map[stock_code] = row.get('name', '')
             
-            # 遍歷 focus_df，但使用 name_map 中的正確名稱
+            # 也從 stocks_df 建立映射，以確保所有注意股都能獲取正確的名稱
+            stocks_name_map = {}
+            for _, row in stocks_df.iterrows():
+                stock_code = str(row["code"]).zfill(4)
+                stocks_name_map[stock_code] = row.get('name', '')
+            
+            # 遍歷 focus_df，優先使用合併後的名稱，其次使用 stocks_df 中的名稱，最後才使用原始名稱
             for _, row in focus_df.iterrows():
                 stock_code = str(row["code"]).zfill(4)
-                # 優先使用合併後的名稱，如果沒有則使用原始名稱
-                stock_name = name_map.get(stock_code, row.get('name', ''))
+                # 優先順序：1. focus_merged 中的名稱 2. stocks_df 中的名稱 3. 原始名稱（但會過濾掉太長的名稱）
+                stock_name = name_map.get(stock_code) or stocks_name_map.get(stock_code) or row.get('name', '')
+                
+                # 如果名稱太長（超過20個字元），可能是敘述文字，嘗試從 stocks_df 獲取
+                if len(str(stock_name)) > 20:
+                    stock_name = stocks_name_map.get(stock_code, '')
+                    # 如果還是太長或為空，嘗試提取簡短的股票名稱
+                    if len(str(stock_name)) > 20 or not stock_name:
+                        name_match = re.search(r'^([\u4e00-\u9fff]{2,4})', str(row.get('name', '')))
+                        if name_match:
+                            stock_name = name_match.group(1)
+                        else:
+                            stock_name = ''  # 無法提取，使用空字串
                 
                 # 從 focus_merged 中獲取週轉率和漲跌幅（如果有的話）
                 turnover = None
@@ -174,12 +193,14 @@ def analyze():
                         turnover = float(merged_row.iloc[0].get('turnover', 0)) if pd.notna(merged_row.iloc[0].get('turnover')) else None
                         chg_pct = float(merged_row.iloc[0].get('chg_pct', 0)) if pd.notna(merged_row.iloc[0].get('chg_pct')) else None
                 
-                focus_stocks_list.append({
-                    'code': stock_code,
-                    'name': stock_name,
-                    'turnover': turnover,
-                    'chg_pct': chg_pct,
-                })
+                # 只添加有名稱的股票
+                if stock_name:
+                    focus_stocks_list.append({
+                        'code': stock_code,
+                        'name': stock_name,
+                        'turnover': turnover,
+                        'chg_pct': chg_pct,
+                    })
             
             # 為每個注意股族群準備個股清單
             focus_theme_stocks_map = {}
